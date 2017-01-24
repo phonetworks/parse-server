@@ -1,8 +1,8 @@
-### Contributing to Parse Server
+### Contributing to PHo Server
 
 #### Pull Requests Welcome!
 
-We really want Parse to be yours, to see it grow and thrive in the open source community.  
+We really want Pho to be yours, to see it grow and thrive in the open source community.  
 
 ##### Please Do's
 
