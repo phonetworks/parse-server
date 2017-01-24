@@ -92,15 +92,15 @@ function RestQuery(config, auth, className, restWhere = {}, restOptions = {}, cl
       break;
     case 'order':
       var fields = restOptions.order.split(',');
-      var sortMap = {};
-      for (var field of fields) {
+      this.findOptions.sort = fields.reduce((sortMap, field) => {
+        field = field.trim();
         if (field[0] == '-') {
           sortMap[field.slice(1)] = -1;
         } else {
           sortMap[field] = 1;
         }
-      }
-      this.findOptions.sort = sortMap;
+        return sortMap;
+      }, {});
       break;
     case 'include': {
       const paths = restOptions.include.split(',');
@@ -110,7 +110,7 @@ function RestQuery(config, auth, className, restWhere = {}, restOptions = {}, cl
         // reduce to create all paths
         // ([a,b,c] -> {a: true, 'a.b': true, 'a.b.c': true})
         return path.split('.').reduce((memo, path, index, parts) => {
-          memo[parts.slice(0, index+1).join('.')] = true;
+          memo[parts.slice(0, index + 1).join('.')] = true;
           return memo;
         }, memo);
       }, {});
@@ -552,8 +552,8 @@ function includePath(config, auth, response, path, restOptions = {}) {
     const keys = new Set(restOptions.keys.split(','));
     const keySet = Array.from(keys).reduce((set, key) => {
       const keyPath = key.split('.');
-      let i=0;
-      for (i; i<path.length; i++) {
+      let i = 0;
+      for (i; i < path.length; i++) {
         if (path[i] != keyPath[i]) {
           return set;
         }

@@ -2,6 +2,12 @@
 
 const request = require('request');
 
+const delayPromise = (delay) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delay);
+  });
+}
+
 describe('Parse.Push', () => {
   var setup = function() {
     var pushAdapter = {
@@ -10,14 +16,14 @@ describe('Parse.Push', () => {
         const promises = installations.map((installation) => {
           if (installation.deviceType == "ios") {
             expect(installation.badge).toEqual(badge);
-            expect(installation.originalBadge+1).toEqual(installation.badge);
+            expect(installation.originalBadge + 1).toEqual(installation.badge);
           } else {
             expect(installation.badge).toBeUndefined();
           }
           return Promise.resolve({
             err: null,
-            deviceType: installation.deviceType,
-            result: true
+            device: installation,
+            transmitted: true
           })
         });
         return Promise.all(promises);
@@ -39,8 +45,8 @@ describe('Parse.Push', () => {
       var installations = [];
       while(installations.length != 10) {
         var installation = new Parse.Object("_Installation");
-        installation.set("installationId", "installation_"+installations.length);
-        installation.set("deviceToken","device_token_"+installations.length)
+        installation.set("installationId", "installation_" + installations.length);
+        installation.set("deviceToken","device_token_" + installations.length)
         installation.set("badge", installations.length);
         installation.set("originalBadge", installations.length);
         installation.set("deviceType", "ios");
@@ -63,6 +69,8 @@ describe('Parse.Push', () => {
           alert: 'Hello world!'
         }
       }, {useMasterKey: true})
+    }).then(() => {
+      return delayPromise(500);
     })
     .then(() => {
       done();
@@ -83,6 +91,8 @@ describe('Parse.Push', () => {
           alert: 'Hello world!'
         }
       }, {useMasterKey: true})
+    }).then(() => {
+      return delayPromise(500);
     }).then(() => {
       done();
     }).catch((err) => {

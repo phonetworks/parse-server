@@ -11,7 +11,7 @@ const logger = require('../../../logger');
 
 const debug = function(){
   let args = [...arguments];
-  args = ['PG: '+arguments[0]].concat(args.slice(1, args.length));
+  args = ['PG: ' + arguments[0]].concat(args.slice(1, args.length));
   const log = logger.getLogger();
   log.debug.apply(log, args);
 }
@@ -196,8 +196,8 @@ const buildWhereClause = ({ schema, query, index }) => {
         }
         return `'${cmpt}'`;
       });
-      let name = components.slice(0, components.length-1).join('->');
-      name+='->>'+components[components.length-1];
+      let name = components.slice(0, components.length - 1).join('->');
+      name += '->>' + components[components.length - 1];
       patterns.push(`${name} = '${fieldValue}'`);
     } else if (typeof fieldValue === 'string') {
       patterns.push(`$${index}:name = $${index + 1}`);
@@ -277,7 +277,7 @@ const buildWhereClause = ({ schema, query, index }) => {
         if (baseArray.length > 0) {
           const not = notIn ? ' NOT ' : '';
           if (isArrayField) {
-            patterns.push(`${not} array_contains($${index}:name, $${index+1})`);
+            patterns.push(`${not} array_contains($${index}:name, $${index + 1})`);
             values.push(fieldName, JSON.stringify(baseArray));
             index += 2;
           } else {
@@ -305,9 +305,9 @@ const buildWhereClause = ({ schema, query, index }) => {
     }
 
     if (Array.isArray(fieldValue.$all) && isArrayField) {
-      patterns.push(`array_contains_all($${index}:name, $${index+1}::jsonb)`);
+      patterns.push(`array_contains_all($${index}:name, $${index + 1}::jsonb)`);
       values.push(fieldName, JSON.stringify(fieldValue.$all));
-      index+=2;
+      index += 2;
     }
 
     if (typeof fieldValue.$exists !== 'undefined') {
@@ -323,9 +323,9 @@ const buildWhereClause = ({ schema, query, index }) => {
     if (fieldValue.$nearSphere) {
       const point = fieldValue.$nearSphere;
       const distance = fieldValue.$maxDistance;
-      const distanceInKM = distance*6371*1000;
-      patterns.push(`ST_distance_sphere($${index}:name::geometry, POINT($${index+1}, $${index+2})::geometry) <= $${index+3}`);
-      sorts.push(`ST_distance_sphere($${index}:name::geometry, POINT($${index+1}, $${index+2})::geometry) ASC`)
+      const distanceInKM = distance * 6371 * 1000;
+      patterns.push(`ST_distance_sphere($${index}:name::geometry, POINT($${index + 1}, $${index + 2})::geometry) <= $${index + 3}`);
+      sorts.push(`ST_distance_sphere($${index}:name::geometry, POINT($${index + 1}, $${index + 2})::geometry) ASC`)
       values.push(fieldName, point.longitude, point.latitude, distanceInKM);
       index += 4;
     }
@@ -337,7 +337,7 @@ const buildWhereClause = ({ schema, query, index }) => {
       const right = box[1].longitude;
       const top = box[1].latitude;
 
-      patterns.push(`$${index}:name::point <@ $${index+1}::box`);
+      patterns.push(`$${index}:name::point <@ $${index + 1}::box`);
       values.push(fieldName, `((${left}, ${bottom}), (${right}, ${top}))`);
       index += 2;
     }
@@ -357,7 +357,7 @@ const buildWhereClause = ({ schema, query, index }) => {
 
       regex = processRegexPattern(regex);
 
-      patterns.push(`$${index}:name ${operator} '$${index+1}:raw'`);
+      patterns.push(`$${index}:name ${operator} '$${index + 1}:raw'`);
       values.push(fieldName, regex);
       index += 2;
     }
@@ -490,11 +490,11 @@ export class PostgresStorageAdapter {
       }
       valuesArray.push(fieldName);
       valuesArray.push(parseTypeToPostgresType(parseType));
-      patternsArray.push(`$${index}:name $${index+1}:raw`);
+      patternsArray.push(`$${index}:name $${index + 1}:raw`);
       if (fieldName === 'objectId') {
         patternsArray.push(`PRIMARY KEY ($${index}:name)`)
       }
-      index = index+2;
+      index = index + 2;
     });
     const qs = `CREATE TABLE IF NOT EXISTS $1:name (${patternsArray.join(',')})`;
     const values = [className, ...valuesArray];
@@ -618,7 +618,7 @@ export class PostgresStorageAdapter {
 
       const values = [className, ...fieldNames];
       const columns = fieldNames.map((name, idx) => {
-        return `$${idx+2}:name`;
+        return `$${idx + 2}:name`;
       }).join(',');
 
       const doBatch = (t) => {
@@ -699,8 +699,8 @@ export class PostgresStorageAdapter {
           }
         }
 
-        if (fieldName === '_account_lockout_expires_at'||
-            fieldName === '_perishable_token_expires_at'||
+        if (fieldName === '_account_lockout_expires_at' ||
+            fieldName === '_perishable_token_expires_at' ||
             fieldName === '_password_changed_at') {
           if (object[fieldName]) {
             valuesArray.push(object[fieldName].iso);
@@ -762,7 +762,7 @@ export class PostgresStorageAdapter {
       const value = geoPoints[key];
       valuesArray.push(value.longitude, value.latitude);
       const l = valuesArray.length + columnsArray.length;
-      return `POINT($${l}, $${l+1})`;
+      return `POINT($${l}, $${l + 1})`;
     });
 
     const columnsPattern = columnsArray.map((col, index) => `$${index + 2}:name`).join(',');
@@ -848,11 +848,11 @@ export class PostgresStorageAdapter {
         }
         const lastKey = `$${index}:name`;
         const fieldNameIndex = index;
-        index+=1;
+        index += 1;
         values.push(fieldName);
         const update = Object.keys(fieldValue).reduce((lastKey, key) => {
-          const str = generate(lastKey, `$${index}::text`, `$${index+1}::jsonb`)
-          index+=2;
+          const str = generate(lastKey, `$${index}::text`, `$${index + 1}::jsonb`)
+          index += 2;
           let value = fieldValue[key];
           if (value) {
             if (value.__op === 'Delete') {
@@ -926,16 +926,34 @@ export class PostgresStorageAdapter {
       } else if (typeof fieldValue === 'object'
                     && schema.fields[fieldName]
                     && schema.fields[fieldName].type === 'Object') {
+        // Gather keys to increment
+        const keysToIncrement = Object.keys(originalUpdate).filter(k => {
+          // choose top level fields that have a delete operation set
+          return originalUpdate[k].__op === 'Increment' && k.split('.').length === 2 && k.split(".")[0] === fieldName;
+        }).map(k => k.split('.')[1]);
+
+        let incrementPatterns = '';
+        if (keysToIncrement.length > 0) {
+          incrementPatterns = ' || ' + keysToIncrement.map((c) => {
+            const amount = fieldValue[c].amount;
+            return `CONCAT('{"${c}":', COALESCE($${index}:name->>'${c}','0')::int + ${amount}, '}')::jsonb`;
+          }).join(' || ');
+          // Strip the keys
+          keysToIncrement.forEach((key) => {
+            delete fieldValue[key];
+          });
+        }
+
         const keysToDelete = Object.keys(originalUpdate).filter(k => {
           // choose top level fields that have a delete operation set
-          return originalUpdate[k].__op === 'Delete' && k.split('.').length === 2
+          return originalUpdate[k].__op === 'Delete' && k.split('.').length === 2 && k.split(".")[0] === fieldName;
         }).map(k => k.split('.')[1]);
 
         const deletePatterns = keysToDelete.reduce((p, c, i) => {
           return p + ` - '$${index + 1 + i}:value'`;
         }, '');
 
-        updatePatterns.push(`$${index}:name = ( COALESCE($${index}:name, '{}'::jsonb) ${deletePatterns} || $${index + 1 + keysToDelete.length}::jsonb )`);
+        updatePatterns.push(`$${index}:name = ( COALESCE($${index}:name, '{}'::jsonb) ${deletePatterns} ${incrementPatterns} || $${index + 1 + keysToDelete.length}::jsonb )`);
 
         values.push(fieldName, ...keysToDelete, JSON.stringify(fieldValue));
         index += 2 + keysToDelete.length;
@@ -997,7 +1015,7 @@ export class PostgresStorageAdapter {
     if (hasLimit) {
       values.push(limit);
     }
-    const skipPattern = hasSkip ? `OFFSET $${values.length+1}` : '';
+    const skipPattern = hasSkip ? `OFFSET $${values.length + 1}` : '';
     if (hasSkip) {
       values.push(skip);
     }
@@ -1024,7 +1042,7 @@ export class PostgresStorageAdapter {
         return key.length > 0;
       });
       columns = keys.map((key, index) => {
-        return `$${index+values.length+1}:name`;
+        return `$${index + values.length + 1}:name`;
       }).join(',');
       values = values.concat(keys);
     }

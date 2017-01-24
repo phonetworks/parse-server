@@ -86,6 +86,7 @@ const defaultColumns = Object.freeze({
     "errorMessage": {type:'Object'},
     "sentPerType":  {type:'Object'},
     "failedPerType":{type:'Object'},
+    "count":       {type:'Number'}
   },
   _JobStatus: {
     "jobName":    {type: 'String'},
@@ -333,25 +334,29 @@ export default class SchemaController {
     if (this.reloadDataPromise && !options.clearCache) {
       return this.reloadDataPromise;
     }
-    this.data = {};
-    this.perms = {};
     this.reloadDataPromise = promise.then(() => {
       return this.getAllClasses(options);
     })
     .then(allSchemas => {
+      const data = {};
+      const perms = {};
       allSchemas.forEach(schema => {
-        this.data[schema.className] = injectDefaultSchema(schema).fields;
-        this.perms[schema.className] = schema.classLevelPermissions;
+        data[schema.className] = injectDefaultSchema(schema).fields;
+        perms[schema.className] = schema.classLevelPermissions;
       });
 
       // Inject the in-memory classes
       volatileClasses.forEach(className => {
         const schema = injectDefaultSchema({ className });
-        this.data[className] = schema.fields;
-        this.perms[className] = schema.classLevelPermissions;
+        data[className] = schema.fields;
+        perms[className] = schema.classLevelPermissions;
       });
+      this.data = data;
+      this.perms = perms;
       delete this.reloadDataPromise;
     }, (err) => {
+      this.data = {};
+      this.perms = {};
       delete this.reloadDataPromise;
       throw err;
     });
@@ -742,7 +747,7 @@ export default class SchemaController {
     if (missingColumns.length > 0) {
       throw new Parse.Error(
         Parse.Error.INCORRECT_TYPE,
-        missingColumns[0]+' is required.');
+        missingColumns[0] + ' is required.');
     }
     return Promise.resolve(this);
   }
@@ -947,7 +952,7 @@ function getObjectType(obj) {
       }
       break;
     }
-    throw new Parse.Error(Parse.Error.INCORRECT_TYPE, "This is not a valid "+obj.__type);
+    throw new Parse.Error(Parse.Error.INCORRECT_TYPE, "This is not a valid " + obj.__type);
   }
   if (obj['$ne']) {
     return getObjectType(obj['$ne']);
